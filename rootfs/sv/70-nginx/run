@@ -1,0 +1,22 @@
+#!/bin/sh
+
+export DOLLAR="$"
+: "${LARAHOST_OCTANE_ENABLED:=false}"
+
+echo "Running nginx ..."
+tmpFile=$(mktemp)
+
+cat studs/nginx.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
+mv "$tmpFile" /etc/nginx/nginx.conf
+
+if [ "$LARAHOST_OCTANE_ENABLED" = true ] ; then
+  echo "Nginx: Octane"
+  cat studs/octane.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
+  mv "$tmpFile" /etc/nginx/http.d/default.conf
+else
+  echo "Nginx: FPM"
+  cat studs/fpm.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
+  mv "$tmpFile" /etc/nginx/http.d/default.conf
+fi
+exec nginx -g "daemon off;"
+#exec nginx

@@ -1,0 +1,12 @@
+#!/bin/sh -e
+: "${LARAHOST_CRON_ENABLED:=true}"
+if [ "$LARAHOST_CRON_ENABLED" = true ] ; then
+  echo '* * * * * cd /home/docker/www && php artisan schedule:run >> /dev/null 2>&1' > /var/spool/cron/crontabs/docker
+  chown docker:docker /var/spool/cron/crontabs/docker
+  chmod 600 /var/spool/cron/crontabs/docker
+  crontab -u docker /var/spool/cron/crontabs/docker
+  echo 'Cron: On!'
+fi
+exec crond -l 2 -f
+
+
