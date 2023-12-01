@@ -10,7 +10,7 @@ while [ -n "$1" ]; do
     exit;
     ;;
   --test)
-    docker build --build-arg ALPINE_VERSION="3.16" --build-arg PHP_VERSION="8" -f Dockerfile -t humaid/larahost:8.0 .
+    docker build --no-cache --build-arg ALPINE_VERSION="3.18" --build-arg PHP_VERSION="82" -f Dockerfile -t humaid/larahost:8.2 .
     exit;
     ;;
   *) echo "$1 is not an option" ;;
