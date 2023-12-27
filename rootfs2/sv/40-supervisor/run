@@ -1,10 +1,22 @@
-#!/bin/bash
+#!/bin/ash -e
+
+LARAHOST_HORIZON_ENABLED="${LARAHOST_HORIZON_ENABLED:-false}"
+LARAHOST_HORIZON_ENABLE_LOG="${LARAHOST_HORIZON_ENABLE_LOG:-false}"
+
+LARAHOST_OCTANE_ENABLED="${LARAHOST_OCTANE_ENABLED:-false}"
+LARAHOST_OCTANE_ENABLE_LOG="${LARAHOST_OCTANE_ENABLE_LOG:-false}"
+
+LARAHOST_QUEUE_ENABLED="${LARAHOST_QUEUE_ENABLED:-false}"
+LARAHOST_QUEUE_NAMES="${LARAHOST_QUEUE_NAMES:-'default:1'}"
+LARAHOST_QUEUE_ENABLE_LOG="${LARAHOST_QUEUE_ENABLE_LOG:-false}"
 
 echo "Running supervisor ..."
 
+set -f                     # avoid globbing (expansion of *).
+
 tmpFile=$(mktemp)
 cat studs/supervisord.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
-mv "$tmpFile" /etc/supervisor/supervisord.conf
+mv "$tmpFile" /etc/supervisord.conf
 if [ "$LARAHOST_QUEUE_ENABLED" = true ] ; then
   echo $LARAHOST_QUEUE_NAMES;
   for w in $(echo "$LARAHOST_QUEUE_NAMES" | tr "," " ") ; do
@@ -15,7 +27,7 @@ if [ "$LARAHOST_QUEUE_ENABLED" = true ] ; then
       export TMP_LV_LOGS=/home/docker/www/storage/logs/$TMP_LV_NAME-worker.log
     fi
     cat studs/laravel-worker.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
-    mv "$tmpFile" /etc/supervisor/conf.d/$TMP_LV_NAME-workers.conf
+    mv "$tmpFile" /etc/supervisor.d/$TMP_LV_NAME-workers.conf
     unset TMP_LV_NAME
     unset TMP_LV_WORKERS
     unset TMP_LV_LOGS
@@ -28,7 +40,7 @@ if [ "$LARAHOST_HORIZON_ENABLED" = true ] ; then
     export TMP_HOR_LOGS=/home/docker/www/storage/logs/horizon.log
   fi
   cat studs/horizon.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
-  mv "$tmpFile" /etc/supervisor/conf.d/horizon.conf
+  mv "$tmpFile" /etc/supervisor.d/horizon.conf
   unset TMP_HOR_LOGS
 fi
 
@@ -38,8 +50,8 @@ if [ "$LARAHOST_OCTANE_ENABLED" = true ] ; then
     export TMP_OCT_LOGS=/home/docker/www/storage/logs/octane.log
   fi
   cat studs/octane.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
-  mv "$tmpFile" /etc/supervisor/conf.d/octane.conf
+  mv "$tmpFile" /etc/supervisor.d/octane.conf
   unset TMP_OCT_LOGS
 fi
 
-supervisord -n -c /etc/supervisor/supervisord.conf
+supervisord -n -c /etc/supervisord.conf
