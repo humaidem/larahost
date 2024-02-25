@@ -68,8 +68,15 @@ RUN apt install -y \
     libtool \
     nodejs \
     mysql-client \
-    postgresql-client-$POSTGRES_VERSION
+    postgresql-client-$POSTGRES_VERSION \
+    jpegoptim \
+    optipng \
+    pngquant \
+    gifsicle \
+    webp \
+    libavif-bin
 
+RUN npm install -g svgo
 
 RUN ACCEPT_EULA=Y apt install -y msodbcsql18
 
@@ -96,7 +103,8 @@ RUN apt install -y \
     php$PHP_VERSION-igbinary \
     php$PHP_VERSION-redis \
     php$PHP_VERSION-swoole \
-    php$PHP_VERSION-memcached
+    php$PHP_VERSION-memcached \
+    php$PHP_VERSION-gmp
 
 
 RUN curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
@@ -184,6 +192,7 @@ ENV LARAHOST_QUEUE_NAMES='default:1'
 ENV LARAHOST_QUEUE_ENABLE_LOG=false
 # nginx
 ENV LARAHOST_NGINX_CLIENT_MAX_BODY_SIZE=1M
+ENV LARAHOST_NGINX_PUBLIC_PATH=/home/docker/www/public
 #php
 ENV LARAHOST_PHP_ALLOW_URL_FOPEN=Off
 ENV LARAHOST_PHP_DISPLAY_ERRORS=Off

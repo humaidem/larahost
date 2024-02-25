@@ -1,7 +1,9 @@
 #!/bin/bash
 
 #ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8,linux/ppc64le,linux/s390x"
-ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8"
+#ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8"
+ARCH_LIST="linux/amd64,linux/arm64/v8"
+#ARCH_LIST="linux/amd64,linux/arm64"
 while [ -n "$1" ]; do
   case "$1" in
   --build)
