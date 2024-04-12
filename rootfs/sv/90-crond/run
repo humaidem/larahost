@@ -1,6 +1,6 @@
 #!/bin/bash
-if [ "$LARAHOST_CRON_ENABLED" = true ] ; then
-  echo '* * * * * cd /home/docker/www && php artisan schedule:run >> /dev/null 2>&1' > /var/spool/cron/crontabs/docker
+if [ "$CRON_ENABLED" = true ] ; then
+  echo "* * * * * cd $LARAVEL_BASE_PATH && php artisan schedule:run >> /dev/null 2>&1" > /var/spool/cron/crontabs/docker
   chown docker:docker /var/spool/cron/crontabs/docker
   chmod 0644 /var/spool/cron/crontabs/docker
   crontab -u docker /var/spool/cron/crontabs/docker

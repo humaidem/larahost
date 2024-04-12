@@ -2,19 +2,24 @@
 
 #ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8,linux/ppc64le,linux/s390x"
 #ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8"
-ARCH_LIST="linux/amd64,linux/arm64/v8"
+#ARCH_LIST="linux/amd64,linux/arm64/v8"
 #ARCH_LIST="linux/amd64,linux/arm64"
 while [ -n "$1" ]; do
   case "$1" in
   --build)
-     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.2 .
+     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.1" -f Dockerfile --push --tag humaid/larahost:8.1 .
+     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" -f Dockerfile --push --tag humaid/larahost:8.2 .
+     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.3" -f Dockerfile --push --tag humaid/larahost:8.3 .
 #    docker buildx build --build-arg ALPINE_VERSION="3.16" --build-arg PHP_VERSION="8" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.0 .
 #    docker buildx build --build-arg ALPINE_VERSION="3.18" --build-arg PHP_VERSION="81" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.1 .
 #    docker buildx build --build-arg ALPINE_VERSION="3.18" --build-arg PHP_VERSION="82" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.2 .
     exit;
     ;;
   --test)
-    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" -f Dockerfile -t humaid/larahost:8.2 .
+    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.0" -f Dockerfile -t humaid/larahost:8.4 .
+#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.3" -f Dockerfile -t humaid/larahost:8.3 .
+#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" -f Dockerfile -t humaid/larahost:8.2 .
+#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.1" -f Dockerfile -t humaid/larahost:8.1 .
     exit;
     ;;
   *) echo "$1 is not an option" ;;

@@ -1,24 +1,24 @@
 #!/bin/bash
 
-: "${LARAHOST_GID:=1337}"
-: "${LARAHOST_UID:=1337}"
 
-if [ "$LARAHOST_UID" -ne 1337 ]; then
-  echo "Switching docker user id to $LARAHOST_UID!"
-  usermod -u $LARAHOST_UID docker
-  echo "docker user id set to $LARAHOST_UID!"
+find /etc/sv/*/run -type f -print -exec chmod 755 {} \;
+
+: "${PUID:=1337}"
+: "${PGID:=1337}"
+
+if [ "$PUID" -ne 1337 ]; then
+  echo "Switching docker user id to $PUID!"
+  usermod -u $PUID docker
+  echo "docker user id set to $PUID!"
   find /home/docker -maxdepth 1 -exec chown docker {} \;
 fi
 
-if [ "$LARAHOST_GID" -ne 1337 ]; then
-  echo "Switching group id to $LARAHOST_GID!"
-  groupmod -g $LARAHOST_GID docker
-  echo "docker group id set to $LARAHOST_GID!"
+if [ "$PGID" -ne 1337 ]; then
+  echo "Switching group id to $PGID!"
+  groupmod -g $PGID docker
+  echo "docker group id set to $PGID!"
   find /home/docker -maxdepth 1 -exec chown :docker {} \;
 fi
-
-update-ca-certificates --fresh
-
 
 echo "Starting runit..."
 exec runsvdir -P /etc/sv &

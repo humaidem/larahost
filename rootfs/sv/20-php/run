@@ -3,7 +3,7 @@
 tmpFile=$(mktemp)
 cat studs/custom.ini | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
 mv "$tmpFile" /etc/php/$PHP_VERSION/fpm/conf.d/custom.ini
-if [ "$LARAHOST_OCTANE_ENABLED" != true ] ; then
+if [ "$PHP_FPM_ENABLED" == true ] ; then
   echo "Running php-fpm ..."
   echo 'PHP-FPM: On!'
   cat studs/www.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmpFile" > /dev/null
