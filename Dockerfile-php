@@ -65,6 +65,7 @@ FROM scratch
 COPY --from=needs-squashing / /
 
 # Set environment variables
+ARG PHP_VERSION
 ENV PHP_VERSION=$PHP_VERSION \
     TZ=UTC \
     NGINX_CLIENT_MAX_BODY_SIZE=1M \
