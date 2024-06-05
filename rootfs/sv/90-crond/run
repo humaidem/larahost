@@ -1,9 +1,0 @@
-#!/bin/bash
-if [ "$CRON_ENABLED" = true ] ; then
-  echo "* * * * * cd $LARAVEL_BASE_PATH && php artisan schedule:run >> /dev/null 2>&1" > /var/spool/cron/crontabs/docker
-  chown docker:docker /var/spool/cron/crontabs/docker
-  chmod 0644 /var/spool/cron/crontabs/docker
-  crontab -u docker /var/spool/cron/crontabs/docker
-  echo 'Cron: On!'
-fi
-cron -f && tail -f /var/log/cron.log

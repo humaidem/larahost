@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -o pipefail
+
+main() {
+    if [[ "$CRON_ENABLED" == true ]]; then
+        setup_cron
+        printf "Cron: On!\n"
+    fi
+
+    cron -f && tail -f /var/log/cron.log
+}
+
+setup_cron() {
+    local cron_file="/var/spool/cron/crontabs/docker"
+
+    printf "* * * * * cd %s && php artisan schedule:run >> /dev/null 2>&1\n" "$LARAVEL_BASE_PATH" > "$cron_file"
+
+    chown docker:docker "$cron_file"
+    chmod 0644 "$cron_file"
+
+    if ! crontab -u docker "$cron_file"; then
+        printf "Error setting up crontab for user docker\n" >&2
+        return 1
+    fi
+}
+
+main

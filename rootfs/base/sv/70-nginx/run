@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -o pipefail
+
+export DOLLAR="$"
+
+printf "Running nginx ...\n"
+
+main() {
+    local tmp_file; tmp_file=$(mktemp)
+
+    process_config "studs/nginx.conf" "$tmp_file" "/etc/nginx/nginx.conf"
+    printf "Nginx: Default\n"
+    process_config "studs/default.conf" "$tmp_file" "/etc/nginx/sites-available/default"
+
+    exec nginx -g "daemon off;"
+}
+
+process_config() {
+    local src="$1"
+    local tmp_file="$2"
+    local dest="$3"
+
+    # shellcheck disable=SC2002
+    if ! cat "$src" | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmp_file" > /dev/null; then
+        printf "Error processing config %s\n" "$src" >&2
+        return 1
+    fi
+
+    if ! mv "$tmp_file" "$dest"; then
+        printf "Error moving file from %s to %s\n" "$tmp_file" "$dest" >&2
+        return 1
+    fi
+}
+
+main

@@ -1,0 +1,67 @@
+#!/bin/bash
+
+set -o pipefail
+
+main() {
+    local tmp_file; tmp_file=$(mktemp)
+
+    process_ini_file "studs/custom.ini" "$tmp_file" "/etc/php/$PHP_VERSION/cli/conf.d/custom.ini"
+    copy_and_set_permissions "/etc/php/$PHP_VERSION/cli/conf.d/custom.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/custom.ini"
+
+    if [[ "$PHP_FPM_ENABLED" == true ]]; then
+        run_php_fpm "$tmp_file"
+    fi
+
+    tail -f /dev/null
+}
+
+process_ini_file() {
+    local src="$1"
+    local tmp_file="$2"
+    local dest="$3"
+
+    # shellcheck disable=SC2002
+    if ! cat "$src" | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmp_file" > /dev/null; then
+        printf "Error processing ini file %s\n" "$src" >&2
+        return 1
+    fi
+
+    if ! mv "$tmp_file" "$dest"; then
+        printf "Error moving file from %s to %s\n" "$tmp_file" "$dest" >&2
+        return 1
+    fi
+
+    chmod 644 "$dest"
+}
+
+copy_and_set_permissions() {
+    local src="$1"
+    local dest="$2"
+
+    if ! cp "$src" "$dest"; then
+        printf "Error copying file from %s to %s\n" "$src" "$dest" >&2
+        return 1
+    fi
+
+    chmod 644 "$dest"
+}
+
+run_php_fpm() {
+    local tmp_file="$1"
+
+    printf "Running php-fpm ...\nPHP-FPM: On!\n"
+    # shellcheck disable=SC2002
+    if ! cat studs/www.conf | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmp_file" > /dev/null; then
+        printf "Error processing www.conf\n" >&2
+        return 1
+    fi
+
+    if ! mv "$tmp_file" "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"; then
+        printf "Error moving file from %s to /etc/php/%s/fpm/pool.d/www.conf\n" "$tmp_file" "$PHP_VERSION" >&2
+        return 1
+    fi
+
+    /usr/sbin/php-fpm"$PHP_VERSION"
+}
+
+main

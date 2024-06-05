@@ -1,28 +1,79 @@
 #!/bin/bash
 
-#ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8,linux/ppc64le,linux/s390x"
-#ARCH_LIST="linux/amd64,linux/amd64/v2,linux/arm64/v8"
-#ARCH_LIST="linux/amd64,linux/arm64/v8"
-#ARCH_LIST="linux/amd64,linux/arm64"
-while [ -n "$1" ]; do
-  case "$1" in
-  --build)
-     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.1" -f Dockerfile --push --tag humaid/larahost:8.1 .
-     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" -f Dockerfile --push --tag humaid/larahost:8.2 .
-     docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.3" -f Dockerfile --push --tag humaid/larahost:8.3 .
-#    docker buildx build --build-arg ALPINE_VERSION="3.16" --build-arg PHP_VERSION="8" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.0 .
-#    docker buildx build --build-arg ALPINE_VERSION="3.18" --build-arg PHP_VERSION="81" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.1 .
-#    docker buildx build --build-arg ALPINE_VERSION="3.18" --build-arg PHP_VERSION="82" --platform $ARCH_LIST -f Dockerfile --push --tag humaid/larahost:8.2 .
-    exit;
-    ;;
-  --test)
-    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.0" -f Dockerfile -t humaid/larahost:8.4 .
-#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.3" -f Dockerfile -t humaid/larahost:8.3 .
-#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.2" -f Dockerfile -t humaid/larahost:8.2 .
-#    docker build --build-arg DOCKER_IMAGE="ubuntu:22.04" --build-arg PHP_VERSION="8.1" -f Dockerfile -t humaid/larahost:8.1 .
-    exit;
-    ;;
-  *) echo "$1 is not an option" ;;
-  esac
-  shift
-done
+set -o pipefail
+
+DOCKER_IMAGE="humaid/larahost:base"
+DOCKERFILE="Dockerfile-php"
+DOCKERFILE_DEV="Dockerfile-php-dev"
+DOCKERFILE_MSSQL="Dockerfile-php-mssql"
+TAG_PREFIX="humaid/larahost"
+ARCH_LIST="linux/arm64,linux/amd64"
+VERSIONS="8.1 8.2 8.3"
+
+build_base_image() {
+    local push_flag="$1"
+
+    printf "Building base Docker image...\n"
+    if ! docker buildx build --build-arg DOCKER_IMAGE="ubuntu:22.04" -f Dockerfile --platform "$ARCH_LIST" $push_flag -t "$DOCKER_IMAGE" .; then
+        printf "Error building base Docker image\n" >&2
+        return 1
+    fi
+}
+
+build_image() {
+    local version="$1"
+    local push_flag="$2"
+
+    printf "Building Docker image for PHP version %s...\n" "$version"
+    if ! docker buildx build --build-arg DOCKER_IMAGE="$DOCKER_IMAGE" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version" .; then
+        printf "Error building Docker image for PHP version %s\n" "$version" >&2
+        return 1
+    fi
+
+    printf "Building Docker image for PHP with xdebug version %s...\n" "$version"
+    if ! docker buildx build --build-arg DOCKER_IMAGE="$TAG_PREFIX:$version" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE_DEV" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version-dev" .; then
+        printf "Error building Docker image for PHP with xdebug version %s\n" "$version" >&2
+        return 1
+    fi
+
+    printf "Building Docker image for PHP with MSSQL version %s...\n" "$version"
+    if ! docker buildx build --build-arg DOCKER_IMAGE="$TAG_PREFIX:$version" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE_MSSQL" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version-mssql" .; then
+        printf "Error building Docker image for PHP with MSSQL version %s\n" "$version" >&2
+        return 1
+    fi
+
+    printf "Building Docker image for PHP with MSSQL and xdebug version %s...\n" "$version"
+    if ! docker buildx build --build-arg DOCKER_IMAGE="$TAG_PREFIX:$version-mssql" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE_DEV" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version-mssql-dev" .; then
+        printf "Error building Docker image for PHP with MSSQL and xdebug version %s\n" "$version" >&2
+        return 1
+    fi
+}
+
+main() {
+    local push_flag=""
+    if [[ "$1" == "--push" ]]; then
+        push_flag="--push"
+        shift
+    fi
+
+    if [[ -n "$1" && "$1" == "--build" ]]; then
+        build_base_image "$push_flag" || exit 1
+
+        for version in $VERSIONS; do
+            build_image "$version" "$push_flag"
+        done
+        exit
+    elif [[ -n "$1" && "$1" == "--test" ]]; then
+        printf "Testing Docker image build for PHP version 8.2 with MSSQL...\n"
+        if ! docker build --build-arg DOCKER_IMAGE="$TAG_PREFIX:8.2" --build-arg PHP_VERSION="8.2" -f "$DOCKERFILE_MSSQL" -t "$TAG_PREFIX:8.2-mssql" .; then
+            printf "Error building Docker image for test\n" >&2
+            exit 1
+        fi
+        exit
+    else
+        printf "Usage: %s [--push] [--build | --test]\n" "$(basename "$0")" >&2
+        exit 1
+    fi
+}
+
+main "$@"

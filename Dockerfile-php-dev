@@ -1,0 +1,58 @@
+# Start from the official PHP image with Alpine
+ARG DOCKER_IMAGE
+FROM $DOCKER_IMAGE AS needs-squashing
+
+LABEL maintainer="Humaid Al Mansoori"
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG PHP_VERSION
+ENV PHP_VERSION=$PHP_VERSION
+
+# Install Xdebug and clean up
+RUN apt update && \
+    apt install -y php$PHP_VERSION-xdebug && \
+    echo "xdebug.mode=develop,debug" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.start_with_request=yes" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.discover_client_host=0" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.client_host=host.docker.internal" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.client_port=9003" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    apt remove -y gnupg gcc g++ autoconf make cpp && \
+    apt -y autoremove && \
+    apt -y purge && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+FROM scratch
+COPY --from=needs-squashing / /
+
+ENV PHP_VERSION=$PHP_VERSION \
+    TZ=UTC \
+    NGINX_CLIENT_MAX_BODY_SIZE=1M \
+    NGINX_PUBLIC_PATH=/home/docker/www/public \
+    PHP_FPM_ENABLED=true \
+    PHP_MAX_INPUT_TIME=300 \
+    PHP_UPLOAD_MAX_FILESIZE=1M \
+    PHP_POST_MAX_SIZE=1M \
+    PHP_MAX_INPUT_VARS=1000 \
+    PHP_MEMORY_LIMIT=128M \
+    PHP_ZLIB_OUTPUT_COMPRESSION=On \
+    PHP_ALLOW_URL_FOPEN=Off \
+    PHP_DISPLAY_ERRORS=Off \
+    PHP_CLEAR_ENV=no \
+    PHP_FILE_UPLOADS=On \
+    PHP_MAX_EXECUTION_TIME=30 \
+    PHP_CERT_PATH='/etc/php/extras/ssl/cacert.pem' \
+    CRON_ENABLED=true \
+    LARAVEL_BASE_PATH=/home/docker/www \
+    QUEUE_ENABLED=false \
+    QUEUE_NAMES='default:1' \
+    QUEUE_ENABLE_LOG=false
+
+# Set working directory
+WORKDIR /home/docker/www
+
+# Expose the necessary port
+EXPOSE 80
+
+# Define the entrypoint
+CMD ["/usr/bin/docker-entrypoint.sh"]

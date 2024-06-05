@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -o pipefail
+
+export DOLLAR="$"
+
+printf "Running nginx ...\n"
+
+main() {
+    local tmp_file; tmp_file=$(mktemp)
+
+    process_config "studs/nginx.conf" "$tmp_file" "/etc/nginx/nginx.conf"
+
+    if [[ "$OCTANE_ENABLED" == true ]]; then
+        printf "Nginx: Octane\n"
+        process_config "studs/octane.conf" "$tmp_file" "/etc/nginx/sites-available/default"
+    else
+        printf "Nginx: FPM\n"
+        process_config "studs/fpm.conf" "$tmp_file" "/etc/nginx/sites-available/default"
+    fi
+
+    exec nginx -g "daemon off;"
+}
+
+process_config() {
+    local src="$1"
+    local tmp_file="$2"
+    local dest="$3"
+
+    if ! envsubst < "$src" | tee "$tmp_file" > /dev/null; then
+        printf "Error processing config %s\n" "$src" >&2
+        return 1
+    fi
+
+    if ! mv "$tmp_file" "$dest"; then
+        printf "Error moving file from %s to %s\n" "$tmp_file" "$dest" >&2
+        return 1
+    fi
+}
+
+main
