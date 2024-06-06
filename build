@@ -9,6 +9,7 @@ DOCKERFILE_MSSQL="Dockerfile-php-mssql"
 TAG_PREFIX="humaid/larahost"
 ARCH_LIST="linux/arm64,linux/amd64"
 VERSIONS="8.1 8.2 8.3"
+VERSIONS="8.2"
 
 build_base_image() {
     local push_flag="$1"
@@ -65,7 +66,7 @@ main() {
         exit
     elif [[ -n "$1" && "$1" == "--test" ]]; then
         printf "Testing Docker image build for PHP version 8.2 with MSSQL...\n"
-        if ! docker build --build-arg DOCKER_IMAGE="$TAG_PREFIX:8.2" --build-arg PHP_VERSION="8.2" -f "$DOCKERFILE_MSSQL" -t "$TAG_PREFIX:8.2-mssql" .; then
+        if ! docker build --build-arg DOCKER_IMAGE="$TAG_PREFIX:8.2" --build-arg PHP_VERSION="8.2" -f "$DOCKERFILE_DEV" -t "$TAG_PREFIX:8.2-dev" .; then
             printf "Error building Docker image for test\n" >&2
             exit 1
         fi

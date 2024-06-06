@@ -9,12 +9,15 @@ ARG PHP_VERSION
 ENV PHP_VERSION=$PHP_VERSION
 
 # Install Xdebug and clean up
-RUN apt update && \
+RUN apt update -y && \
     apt install -y php$PHP_VERSION-xdebug && \
-    echo "xdebug.mode=develop,debug" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.mode=develop,coverage,debug,profile" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
     echo "xdebug.start_with_request=yes" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
     echo "xdebug.discover_client_host=0" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
     echo "xdebug.client_host=host.docker.internal" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.idekey=docker" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.log=/dev/stdout" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
+    echo "xdebug.log_level" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
     echo "xdebug.client_port=9003" >> /etc/php/$PHP_VERSION/fpm/conf.d/20-xdebug.ini && \
     apt remove -y gnupg gcc g++ autoconf make cpp && \
     apt -y autoremove && \
