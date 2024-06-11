@@ -6,9 +6,7 @@ LABEL maintainer="Humaid Al Mansoori"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
-    NODE_VERSION=20 \
-    PUID=1337 \
-    PGID=1337
+    NODE_VERSION=20
 
 # Install dependencies, clean up to reduce image size
 RUN apt update -y && apt install -y gnupg curl && \
@@ -50,20 +48,13 @@ RUN apt install -y \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
-# Create user and setup directories
-RUN groupadd --force -g $PGID docker && \
-    useradd -ms /bin/bash --no-user-group -g $PGID -u $PUID docker && \
-    mkdir -p /home/docker/www/public && \
-    echo "humaid/laraHost:base" > /home/docker/www/public/index.html && \
-    chown -R docker:docker /home/docker
+RUN mkdir -p /www/public && \
+    echo "humaid/laraHost:base" > /www/public/index.html && \
+    chown -R ubuntu:ubuntu /www
 
-USER docker
+USER ubuntu
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash
-# bun
-RUN echo '# bun exports' >> /home/docker/.bashrc && \
-    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/docker/.bashrc && \
-    echo 'export PATH=$BUN_INSTALL/bin:$PATH' >> /home/docker/.bashrc
 
 USER root
 # Copy and setup service scripts
@@ -86,13 +77,16 @@ COPY --from=needs-squashing / /
 
 # Set environment variables
 ENV TZ=UTC \
+    PUID=1000 \
+    PGID=1000 \
     NGINX_CLIENT_MAX_BODY_SIZE=1M \
-    NGINX_PUBLIC_PATH=/home/docker/www/public \
+    NGINX_CLIENT_MAX_BODY_SIZE=1M \
+    NGINX_PUBLIC_PATH=/www/public \
     CRON_ENABLED=true \
-    LARAVEL_BASE_PATH=/home/docker/www
+    LARAVEL_BASE_PATH=/www
 
 # Set working directory
-WORKDIR /home/docker/www
+WORKDIR /www
 
 # Expose the necessary port
 EXPOSE 80

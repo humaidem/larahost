@@ -12,15 +12,15 @@ main() {
 }
 
 setup_cron() {
-    local cron_file="/var/spool/cron/crontabs/docker"
+    local cron_file="/var/spool/cron/crontabs/ubuntu"
 
     printf "* * * * * cd %s && php artisan schedule:run >> /dev/null 2>&1\n" "$LARAVEL_BASE_PATH" > "$cron_file"
 
-    chown docker:docker "$cron_file"
+    chown ubuntu:ubuntu "$cron_file"
     chmod 0644 "$cron_file"
 
-    if ! crontab -u docker "$cron_file"; then
-        printf "Error setting up crontab for user docker\n" >&2
+    if ! crontab -u ubuntu "$cron_file"; then
+        printf "Error setting up crontab for user ubuntu\n" >&2
         return 1
     fi
 }

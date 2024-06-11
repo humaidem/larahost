@@ -44,7 +44,7 @@ process_queue_names() {
         local tmp_lv_workers="${w#*:}"
         local tmp_lv_logs="/dev/fd/1"
 
-        [[ "$QUEUE_ENABLE_LOG" == true ]] && tmp_lv_logs="/home/docker/www/storage/logs/$tmp_lv_name-worker.log"
+        [[ "$QUEUE_ENABLE_LOG" == true ]] && tmp_lv_logs="/www/storage/logs/$tmp_lv_name-worker.log"
 
         export TMP_LV_NAME="$tmp_lv_name"
         export TMP_LV_WORKERS="$tmp_lv_workers"

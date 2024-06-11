@@ -8,9 +8,7 @@ ARG PHP_VERSION
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
     PHP_VERSION=$PHP_VERSION \
-    NODE_VERSION=20 \
-    PUID=1337 \
-    PGID=1337
+    NODE_VERSION=20
 
 
 # Install PHP and dependencies, clean up to reduce image size
@@ -54,7 +52,7 @@ RUN setcap "cap_net_bind_service=+ep" /usr/bin/php$PHP_VERSION
 RUN curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
 
 # Setup web root
-RUN mkdir -p /home/docker/www/public && echo "<?php phpinfo();" > /home/docker/www/public/index.php
+RUN mkdir -p /www/public && echo "<?php phpinfo();" > /www/public/index.php
 
 # Add SSL certificates
 RUN mkdir -p /etc/php/extras/ssl
@@ -72,8 +70,10 @@ COPY --from=needs-squashing / /
 ARG PHP_VERSION
 ENV PHP_VERSION=$PHP_VERSION \
     TZ=UTC \
+    PUID=1000 \
+    PGID=1000 \
     NGINX_CLIENT_MAX_BODY_SIZE=1M \
-    NGINX_PUBLIC_PATH=/home/docker/www/public \
+    NGINX_PUBLIC_PATH=/www/public \
     PHP_FPM_ENABLED=true \
     PHP_MAX_INPUT_TIME=300 \
     PHP_UPLOAD_MAX_FILESIZE=1M \
@@ -88,13 +88,13 @@ ENV PHP_VERSION=$PHP_VERSION \
     PHP_MAX_EXECUTION_TIME=30 \
     PHP_CERT_PATH='/etc/php/extras/ssl/cacert.pem' \
     CRON_ENABLED=true \
-    LARAVEL_BASE_PATH=/home/docker/www \
+    LARAVEL_BASE_PATH=/www \
     QUEUE_ENABLED=false \
     QUEUE_NAMES='default:1' \
     QUEUE_ENABLE_LOG=false
 
 # Set working directory
-WORKDIR /home/docker/www
+WORKDIR /www
 
 # Expose the necessary port
 EXPOSE 80
