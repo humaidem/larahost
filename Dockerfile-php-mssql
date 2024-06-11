@@ -3,10 +3,14 @@ ARG DOCKER_IMAGE
 FROM $DOCKER_IMAGE AS needs-squashing
 
 LABEL maintainer="Humaid Al Mansoori"
-ENV DEBIAN_FRONTEND=noninteractive
 
 ARG PHP_VERSION
-ENV PHP_VERSION=$PHP_VERSION
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC \
+    PHP_VERSION=$PHP_VERSION \
+    NODE_VERSION=20 \
+    PUID=1337 \
+    PGID=1337
 
 # Install ODBC, SQL Server drivers, and PHP extensions, clean up to reduce image size
 RUN apt update && \

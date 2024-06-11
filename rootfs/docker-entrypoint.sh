@@ -44,6 +44,8 @@ else
         sleep 1
     done
 
+    update-ca-certificates --fresh
+
     printf "runit started...\n"
     tail -f /dev/null
 fi

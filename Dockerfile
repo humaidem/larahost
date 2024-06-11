@@ -24,6 +24,8 @@ RUN mkdir -p /etc/apt/keyrings && \
 
 # Install additional packages and ensure security updates
 RUN apt install -y \
+    apt-transport-https \
+    software-properties-common \
     runit \
     ca-certificates \
     nano \
@@ -40,7 +42,6 @@ RUN apt install -y \
     nginx \
     cron \
     nodejs \
-    python2 \
     supervisor \
     wget \
     lsb-release && \
@@ -48,8 +49,6 @@ RUN apt install -y \
     apt -y autoremove && apt -y purge && apt clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Bun
-RUN curl -fsSL https://bun.sh/install | bash
 
 # Create user and setup directories
 RUN groupadd --force -g $PGID docker && \
@@ -58,6 +57,15 @@ RUN groupadd --force -g $PGID docker && \
     echo "humaid/laraHost:base" > /home/docker/www/public/index.html && \
     chown -R docker:docker /home/docker
 
+USER docker
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+# bun
+RUN echo '# bun exports' >> /home/docker/.bashrc && \
+    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/docker/.bashrc && \
+    echo 'export PATH=$BUN_INSTALL/bin:$PATH' >> /home/docker/.bashrc
+
+USER root
 # Copy and setup service scripts
 COPY rootfs/base/sv /etc/sv
 RUN find /etc/sv/*/run -type f -exec chmod 755 {} \;
