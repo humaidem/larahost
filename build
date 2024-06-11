@@ -8,7 +8,7 @@ DOCKERFILE_MSSQL="Dockerfile-php-mssql"
 TAG_PREFIX="humaid/larahost"
 ARCH_LIST="linux/arm64,linux/amd64"
 VERSIONS="8.1 8.2 8.3"
-VERSIONS="8.2"
+#VERSIONS="8.2"
 
 build_base_image() {
     local push_flag="$1"
