@@ -54,6 +54,8 @@ RUN apk update && \
     php$PHP_VERSION-json \
     php$PHP_VERSION-xml \
     php$PHP_VERSION-xmlwriter \
+    php$PHP_VERSION-xmlreader \
+    php$PHP_VERSION-exif \
     php$PHP_VERSION-simplexml \
     php$PHP_VERSION-dom \
     php$PHP_VERSION-bcmath \
