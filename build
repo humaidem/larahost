@@ -2,72 +2,19 @@
 
 set -o pipefail
 
-DOCKER_IMAGE="humaid/larahost:base"
-DOCKERFILE="Dockerfile-php"
-DOCKERFILE_MSSQL="Dockerfile-php-mssql"
-TAG_PREFIX="humaid/larahost"
-ARCH_LIST="linux/arm64,linux/amd64"
-VERSIONS="8.1 8.2 8.3"
-#VERSIONS="8.2"
+build_image() {
+    local OS_IMAGE="$1"
+    local PHP_VERSION="$2"
+    local DOCKER_TAG="$3"
 
-build_base_image() {
-    local push_flag="$1"
-
-    printf "Building base Docker image...\n"
-    if ! docker buildx build --build-arg DOCKER_IMAGE="ubuntu:24.04" -f Dockerfile --platform "$ARCH_LIST" $push_flag -t "$DOCKER_IMAGE" .; then
+    printf "Building Base Docker image ($OS_IMAGE)...\n"
+    if ! docker build --build-arg OS_IMAGE="$OS_IMAGE" --build-arg PHP_VERSION="$PHP_VERSION" -f Dockerfile -t "humaid/larahost:$DOCKER_TAG" .; then
         printf "Error building base Docker image\n" >&2
         return 1
     fi
 }
 
-build_image() {
-    local version="$1"
-    local push_flag="$2"
 
-    printf "Building Docker image for PHP version %s...\n" "$version"
-    if ! docker buildx build --build-arg DOCKER_IMAGE="$DOCKER_IMAGE" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version" .; then
-        printf "Error building Docker image for PHP version %s\n" "$version" >&2
-        return 1
-    fi
-
-    printf "Building Docker image for PHP with MSSQL version %s...\n" "$version"
-    if ! docker buildx build --build-arg DOCKER_IMAGE="$TAG_PREFIX:$version" --build-arg PHP_VERSION="$version" -f "$DOCKERFILE_MSSQL" --platform "$ARCH_LIST" $push_flag -t "$TAG_PREFIX:$version-mssql" .; then
-        printf "Error building Docker image for PHP with MSSQL version %s\n" "$version" >&2
-        return 1
-    fi
-}
-
-main() {
-    local push_flag=""
-    if [[ "$1" == "--push" ]]; then
-        push_flag="--push"
-        shift
-    fi
-
-    if [[ -n "$1" && "$1" == "--build" ]]; then
-        build_base_image "$push_flag" || exit 1
-
-        for version in $VERSIONS; do
-            build_image "$version" "$push_flag"
-        done
-        exit
-    elif [[ -n "$1" && "$1" == "--test" ]]; then
-        printf "Testing Docker image build for PHP...\n"
-        if ! docker build --build-arg DOCKER_IMAGE="ubuntu:24.04" -f Dockerfile -t "$DOCKER_IMAGE" .; then
-#        if ! docker build --build-arg DOCKER_IMAGE="humaid/larahost:8.2" --build-arg PHP_VERSION="8.2" -f "Dockerfile-php-mssql" -t "humaid/larahost:8.2-mssql" .; then
-#        if ! docker build --build-arg DOCKER_IMAGE="humaid/larahost:8.2" --build-arg PHP_VERSION="8.2" -f "Dockerfile-php" -t "humaid/larahost:8.2" .; then
-            printf "Error building Docker image for test\n" >&2
-            exit 1
-        fi
-#        if ! docker build --build-arg DOCKER_IMAGE="ubuntu:24.04" -f Dockerfile -t "$DOCKER_IMAGE" .; then
-#            printf "Error building Docker image for test\n" >&2
-#            exit 1
-#        fi
-        exit
-    else
-        printf "Usage: %s [--push] [--build | --test]\n" "$(basename "$0")" >&2
-        exit 1
-    fi
-}
-
-main "$@"
+#build_image "alpine:3.19" "81" "8.1"
+build_image "alpine:3.20" "82" "8.2"
+#build_image "alpine:3.20" "83" "8.3"

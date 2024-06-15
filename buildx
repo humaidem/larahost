@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -o pipefail
+ARCH_LIST="linux/arm64,linux/amd64,linux/amd64/v2,linux/ppc64le,linux/s390x"
+build_image() {
+    local OS_IMAGE="$1"
+    local PHP_VERSION="$2"
+    local DOCKER_TAG="$3"
+
+    printf "Building Base Docker image ($OS_IMAGE)...\n"
+    if ! docker buildx build --build-arg OS_IMAGE="$OS_IMAGE" --build-arg PHP_VERSION="$PHP_VERSION" -f Dockerfile --platform "$ARCH_LIST" --push -t "humaid/larahost:$DOCKER_TAG" .; then
+        printf "Error building base Docker image\n" >&2
+        return 1
+    fi
+}
+
+
+build_image "alpine:3.19" "81" "8.1"
+build_image "alpine:3.20" "82" "8.2"
+build_image "alpine:3.20" "83" "8.3"

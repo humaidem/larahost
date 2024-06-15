@@ -1,25 +1,10 @@
 #!/bin/bash
 
-set -o pipefail
-
-export DOLLAR="$"
-
-printf "Running nginx ...\n"
-
-main() {
-    local tmp_file; tmp_file=$(mktemp)
-
-    process_config "studs/nginx.conf" "$tmp_file" "/etc/nginx/nginx.conf"
-    printf "Nginx: Default\n"
-    process_config "studs/default.conf" "$tmp_file" "/etc/nginx/sites-available/default"
-
-    exec nginx -g "daemon off;"
-}
-
+# Define a function that can be sourced in multiple scripts
 process_config() {
     local src="$1"
-    local tmp_file="$2"
-    local dest="$3"
+    local dest="$2"
+    local tmp_file; tmp_file=$(mktemp)
 
     # shellcheck disable=SC2002
     if ! cat "$src" | envsubst "$(env | cut -d= -f1 | sed -e 's/^/$/')" | tee "$tmp_file" > /dev/null; then
@@ -32,5 +17,3 @@ process_config() {
         return 1
     fi
 }
-
-main

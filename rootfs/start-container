@@ -1,0 +1,59 @@
+#!/bin/sh
+set -e
+
+export PUID="${PUID:-1000}"
+export GUID="${GUID:-1000}"
+
+# Adjust permissions for run scripts
+find /etc/sv/*/run -type f -exec chmod 755 {} +
+
+# Function to update group ID if it doesn't match the provided GUID
+update_group() {
+    if [ "$(getent group docker | cut -d: -f3)" != "$GUID" ]; then
+        echo "Updating group ID to $GUID"
+        groupmod -g "$GUID" docker
+        find /home/docker -maxdepth 1 -exec chown docker {} +
+    fi
+}
+
+# Function to update user ID if it doesn't match the provided UID
+update_user() {
+    if [ "$(id -u docker)" != "$PUID" ]; then
+        echo "Updating user ID to $PUID"
+        usermod -u "$PUID" -g "$GUID" docker
+        find /home/docker -maxdepth 1 -exec chown :docker {} +
+    fi
+}
+
+# Update group and user IDs
+update_group
+update_user
+
+# Function to handle shutdown signals
+shutdown() {
+    echo "Shutting down runit..."
+    sv stop /etc/sv/*
+    exit 0
+}
+
+# Trap termination signals
+trap shutdown SIGTERM SIGINT
+
+# Check if any arguments are passed; if not, run `runit`
+if [ "$#" -eq 0 ]; then
+    echo "Starting runit..."
+    exec runsvdir -P /etc/sv &
+    runit_pid=$!
+
+    # Wait for runit to start
+    while [ ! -d "/etc/sv" ]; do
+        sleep 1
+    done
+
+    update-ca-certificates --fresh
+
+    # Wait indefinitely while runit runs
+    wait $runit_pid
+else
+    exec su-exec docker "$@"
+fi

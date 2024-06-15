@@ -1,95 +1,125 @@
-# Define the base image
-ARG DOCKER_IMAGE
-FROM $DOCKER_IMAGE AS needs-squashing
+# Use Alpine as the base image
+ARG OS_IMAGE
+FROM $OS_IMAGE AS needs-squashing
 
 LABEL maintainer="Humaid Al Mansoori"
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC \
-    NODE_VERSION=20
+ARG PHP_VERSION
+ENV ALPINE_FRONTEND=noninteractive \
+    PHP_VERSION=$PHP_VERSION \
+    PUID=1000 \
+    GUID=1000 \
+    TZ=UTC
 
-# Install dependencies, clean up to reduce image size
-RUN apt update -y && apt install -y gnupg curl && \
-    apt upgrade -y && \
-    apt -y autoremove && apt -y purge && apt clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Add NodeSource GPG key and repository
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
-    apt update -y
-
-# Install additional packages and ensure security updates
-RUN apt install -y \
-    apt-transport-https \
-    software-properties-common \
-    runit \
+# Install dependencies, bash, Node.js, npm, PHP, and clean up to reduce image size
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache \
+    gnupg \
+    curl \
     ca-certificates \
     nano \
     zip \
     unzip \
     git \
-    sqlite3 \
+    sqlite \
     mysql-client \
-    libcap2-bin \
-    libpng-dev \
-    dnsutils \
-    librsvg2-bin \
-    gettext-base \
-    nginx \
-    cron \
+    su-exec \
     nodejs \
+    gcompat \
+    bash \
+    libcap \
+    libpng \
+    librsvg \
+    runit \
+    nginx \
+    envsubst \
+    npm \
     supervisor \
-    wget \
-    lsb-release && \
-    apt upgrade -y && \
-    apt -y autoremove && apt -y purge && apt clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    php$PHP_VERSION \
+    php$PHP_VERSION-common \
+    php$PHP_VERSION-fpm \
+    php$PHP_VERSION-pdo \
+    php$PHP_VERSION-opcache \
+    php$PHP_VERSION-zip \
+    php$PHP_VERSION-gd \
+    php$PHP_VERSION-phar \
+    php$PHP_VERSION-iconv \
+    php$PHP_VERSION-cli \
+    php$PHP_VERSION-curl \
+    php$PHP_VERSION-openssl \
+    php$PHP_VERSION-mbstring \
+    php$PHP_VERSION-tokenizer \
+    php$PHP_VERSION-fileinfo \
+    php$PHP_VERSION-json \
+    php$PHP_VERSION-xml \
+    php$PHP_VERSION-xmlwriter \
+    php$PHP_VERSION-simplexml \
+    php$PHP_VERSION-dom \
+    php$PHP_VERSION-bcmath \
+    php$PHP_VERSION-ldap \
+    php$PHP_VERSION-intl \
+    php$PHP_VERSION-soap \
+    php$PHP_VERSION-imap \
+    php$PHP_VERSION-posix \
+    php$PHP_VERSION-pdo_mysql \
+    php$PHP_VERSION-pdo_sqlite \
+    php$PHP_VERSION-pdo_pgsql \
+    php$PHP_VERSION-pecl-redis \
+    php$PHP_VERSION-pecl-imagick \
+    php$PHP_VERSION-pecl-swoole \
+    php$PHP_VERSION-pecl-igbinary \
+    php$PHP_VERSION-pecl-pcov \
+    php$PHP_VERSION-pcntl \
+    php$PHP_VERSION-gmp && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/* && \
+    find /usr/share/man /usr/share/doc /usr/share/info /usr/share/licenses -type f | xargs rm -rf && \
+    find / -type f -name "*.apk-new" -exec rm {} \;
 
+# Symlink PHP binaries
+RUN [ ! -e /usr/bin/php ] && ln -s /usr/bin/php$PHP_VERSION /usr/bin/php || echo "/usr/bin/php already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/php-fpm ] && ln -s /usr/sbin/php-fpm$PHP_VERSION /usr/bin/php-fpm || echo "/usr/bin/php-fpm already exists, skipping symlink creation"
 
-RUN mkdir -p /www/public && \
-    echo "humaid/laraHost:base" > /www/public/index.html && \
-    chown -R ubuntu:ubuntu /www
+# Install Composer
+RUN curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
 
-USER ubuntu
 # Install Bun
-RUN curl -fsSL https://bun.sh/install | bash
-
-USER root
-# Copy and setup service scripts
-COPY rootfs/base/sv /etc/sv
-RUN find /etc/sv/*/run -type f -exec chmod 755 {} \;
-
-# Setup nginx configuration
-RUN mkdir -p /etc/nginx/sites-available-conf
-
-# Setup supervisor configuration
-RUN mkdir /etc/supervisor.d
+RUN curl -fsSL https://bun.sh/install | bash && \
+      mv $HOME/.bun/bin/bun /usr/local/bin/bun && \
+      chmod +x /usr/local/bin/bun && \
+      rm -rf /root/.bun /root/.cache /tmp/*
 
 # Copy entrypoint script and set permissions
-COPY rootfs/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
-RUN chmod 755 /usr/bin/docker-entrypoint.sh
+COPY rootfs/start-container /usr/local/bin/start-container
+RUN chmod 755 /usr/local/bin/start-container
+
+# Copy additional runit configurations
+COPY rootfs/runit /etc/sv
+COPY rootfs/process_config.sh /usr/local/bin/process_config.sh
+
+# Create the docker user and group
+RUN addgroup -g $GUID docker && \
+    adduser -D -u $PUID -G docker -s /bin/sh docker
+
+RUN mkdir -p /run/php && \
+    mkdir -p /home/docker/www/public && \
+    echo "<?php phpinfo();" > /home/docker/www/public/index.php && \
+    chown -Rf docker:docker /home/docker
 
 # Start from a clean state
-FROM scratch
+FROM $OS_IMAGE
 COPY --from=needs-squashing / /
 
 # Set environment variables
 ENV TZ=UTC \
     PUID=1000 \
-    PGID=1000 \
-    NGINX_CLIENT_MAX_BODY_SIZE=1M \
-    NGINX_CLIENT_MAX_BODY_SIZE=1M \
-    NGINX_PUBLIC_PATH=/www/public \
-    CRON_ENABLED=true \
-    LARAVEL_BASE_PATH=/www
+    GUID=1000
 
 # Set working directory
-WORKDIR /www
+WORKDIR /home/docker/www
 
 # Expose the necessary port
 EXPOSE 80
 
 # Define the entrypoint
-CMD ["/usr/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["start-container"]
