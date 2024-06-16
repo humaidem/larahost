@@ -21,6 +21,8 @@ export PMA_WEBROOT="${PMA_WEBROOT:-/larahost/pma/}"
 export PMA_UPLOAD_LIMIT="${PMA_UPLOAD_LIMIT:-10m}"
 export PMA_MAX_EXECUTION_TIME="${PMA_MAX_EXECUTION_TIME:-600}"
 
+# change nginx lib folder permission
+chown -R docker:docker /var/lib/nginx
 
 process_config "studs/nginx.conf" "/etc/nginx/nginx.conf"
 if [[ "$OCTANE_ENABLED" == true ]]; then

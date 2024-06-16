@@ -26,8 +26,12 @@ export UPLOAD_LIMIT="${UPLOAD_LIMIT:-2M}"
 
 if [[ "$PHP_FPM_ENABLED" == true ]]; then
     printf "Running PHP-FPM ...\n"
+    process_config "studs/php.ini" "/etc/$php_version/php.ini"
     process_config "studs/custom.ini" "/etc/$php_version/conf.d/custom.ini"
     process_config "studs/www.conf" "/etc/$php_version/php-fpm.d/www.conf"
+    chmod 644 "studs/php.ini" "/etc/$php_version/php.ini"
+    chmod 644 "/etc/$php_version/conf.d/custom.ini"
+    chmod 644 "/etc/$php_version/php-fpm.d/www.conf"
     /usr/bin/php-fpm -F
 else
   tail -f /dev/null

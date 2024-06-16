@@ -36,7 +36,9 @@ RUN apk update && \
     envsubst \
     npm \
     supervisor \
+    ffmpeg \
     php$PHP_VERSION \
+    php$PHP_VERSION-dev \
     php$PHP_VERSION-common \
     php$PHP_VERSION-fpm \
     php$PHP_VERSION-pdo \
@@ -73,14 +75,25 @@ RUN apk update && \
     php$PHP_VERSION-pecl-igbinary \
     php$PHP_VERSION-pecl-pcov \
     php$PHP_VERSION-pcntl \
+    php$PHP_VERSION-pear \
     php$PHP_VERSION-gmp && \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk && \
+    apk add --no-cache --force-overwrite glibc-2.28-r0.apk && \
+    rm glibc-2.28-r0.apk && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/* && \
     find /usr/share/man /usr/share/doc /usr/share/info /usr/share/licenses -type f | xargs rm -rf && \
     find / -type f -name "*.apk-new" -exec rm {} \;
 
 # Symlink PHP binaries
 RUN [ ! -e /usr/bin/php ] && ln -s /usr/bin/php$PHP_VERSION /usr/bin/php || echo "/usr/bin/php already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/phpize ] && ln -s /usr/bin/phpize$PHP_VERSION /usr/bin/phpize || echo "/usr/bin/phpize already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/php-config ] && ln -s /usr/bin/php-config$PHP_VERSION /usr/bin/php-config || echo "/usr/bin/php-config already exists, skipping symlink creation"
 RUN [ ! -e /usr/bin/php-fpm ] && ln -s /usr/sbin/php-fpm$PHP_VERSION /usr/bin/php-fpm || echo "/usr/bin/php-fpm already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/pear ] && ln -s /usr/bin/pear$PHP_VERSION /usr/bin/pear || echo "/usr/bin/pear already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/peardev ] && ln -s /usr/bin/peardev$PHP_VERSION /usr/bin/peardev || echo "/usr/bin/peardev already exists, skipping symlink creation"
+RUN [ ! -e /usr/bin/pecl ] && ln -s /usr/bin/pecl$PHP_VERSION /usr/bin/pecl || echo "/usr/bin/pecl already exists, skipping symlink creation"
+
 
 # Install Composer
 RUN curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
