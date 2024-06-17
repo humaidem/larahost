@@ -15,6 +15,7 @@ ENV ALPINE_FRONTEND=noninteractive \
 RUN apk update && \
     apk upgrade && \
     apk add --no-cache \
+    tzdata \
     gnupg \
     curl \
     ca-certificates \
