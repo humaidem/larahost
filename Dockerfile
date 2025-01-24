@@ -1,10 +1,10 @@
 # Use Alpine as the base image
-ARG OS_IMAGE
+ARG OS_IMAGE=alpine:3.20
 FROM $OS_IMAGE AS needs-squashing
 
 LABEL maintainer="Humaid Al Mansoori"
 
-ARG PHP_VERSION
+ARG PHP_VERSION=82
 ENV ALPINE_FRONTEND=noninteractive \
     PHP_VERSION=$PHP_VERSION \
     PUID=1000 \
@@ -38,6 +38,11 @@ RUN apk update && \
     npm \
     supervisor \
     ffmpeg \
+    icu \
+    icu-dev \
+    icu-libs \
+    icu-data \
+    icu-data-full \
     php$PHP_VERSION \
     php$PHP_VERSION-dev \
     php$PHP_VERSION-common \
@@ -77,6 +82,7 @@ RUN apk update && \
     php$PHP_VERSION-pecl-pcov \
     php$PHP_VERSION-pcntl \
     php$PHP_VERSION-pear \
+    php$PHP_VERSION-mysqli \
     php$PHP_VERSION-gmp && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk && \

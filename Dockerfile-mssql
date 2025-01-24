@@ -1,10 +1,10 @@
 # Use Alpine as the base image
-ARG OS_IMAGE
+ARG OS_IMAGE=alpine:3.20
 FROM $OS_IMAGE AS builder
 
 LABEL maintainer="Humaid Al Mansoori"
 
-ARG PHP_VERSION
+ARG PHP_VERSION=82
 ENV ALPINE_FRONTEND=noninteractive \
     PHP_VERSION=$PHP_VERSION \
     PUID=1000 \
