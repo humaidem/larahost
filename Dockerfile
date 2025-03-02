@@ -83,6 +83,8 @@ RUN apk update && \
     php$PHP_VERSION-pcntl \
     php$PHP_VERSION-pear \
     php$PHP_VERSION-mysqli \
+    php$PHP_VERSION-ctype \
+    php$PHP_VERSION-sodium \
     php$PHP_VERSION-gmp && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk && \
@@ -121,12 +123,18 @@ COPY rootfs/process_config.sh /usr/local/bin/process_config.sh
 
 # Create the docker user and group
 RUN addgroup -g $GUID docker && \
-    adduser -D -u $PUID -G docker -s /bin/sh docker
+    adduser -D -u $PUID -G docker -s /bin/bash docker
 
 RUN mkdir -p /run/php && \
     mkdir -p /home/docker/www/public && \
     echo "<?php phpinfo();" > /home/docker/www/public/index.php && \
+    echo "export PATH=~/.composer/vendor/bin:\$PATH" > /home/docker/.bashrc && \
     chown -Rf docker:docker /home/docker
+
+USER docker
+RUN composer global require laravel/installer
+RUN source /home/docker/.bashrc
+USER root
 
 # Start from a clean state
 FROM $OS_IMAGE
