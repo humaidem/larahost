@@ -84,6 +84,7 @@ RUN apk update && \
     php$PHP_VERSION-pear \
     php$PHP_VERSION-mysqli \
     php$PHP_VERSION-ctype \
+    php$PHP_VERSION-sqlite3 \
     php$PHP_VERSION-sodium \
     php$PHP_VERSION-gmp && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
@@ -133,6 +134,8 @@ RUN mkdir -p /run/php && \
 
 USER docker
 RUN composer global require laravel/installer
+RUN composer global config --no-plugins allow-plugins.sandersander/composer-link true
+RUN composer global require sandersander/composer-link
 RUN source /home/docker/.bashrc
 USER root
 

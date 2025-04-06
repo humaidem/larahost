@@ -15,10 +15,10 @@ build_image() {
 }
 
 
-#build_image "alpine:3.20" "Dockerfile" "82" "8.2"
-#build_image "alpine:3.20" "Dockerfile" "83" "8.3"
+build_image "alpine:3.20" "Dockerfile" "82" "8.2"
+build_image "alpine:3.20" "Dockerfile" "83" "8.3"
 build_image "alpine:3.21" "Dockerfile" "84" "8.4"
-#build_image "humaid/larahost:8.2" "Dockerfile-mssql" "82" "8.2-mssql"
-#build_image "humaid/larahost:8.3" "Dockerfile-mssql" "83" "8.3-mssql"
+build_image "humaid/larahost:8.2" "Dockerfile-mssql" "82" "8.2-mssql"
+build_image "humaid/larahost:8.3" "Dockerfile-mssql" "83" "8.3-mssql"
 build_image "humaid/larahost:8.4" "Dockerfile-mssql" "84" "8.4-mssql"
 #
