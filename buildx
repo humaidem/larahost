@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -o pipefail
-#ARCH_LIST="linux/arm64,linux/amd64,linux/amd64/v2,linux/ppc64le,linux/s390x"
 ARCH_LIST="linux/arm64,linux/amd64"
 
 build_image() {
@@ -15,8 +14,8 @@ build_image() {
 }
 
 
-#build_image "ubuntu:24.04" "Dockerfile" "8.0"
-#build_image "ubuntu:24.04" "Dockerfile" "8.1"
-#build_image "ubuntu:24.04" "Dockerfile" "8.2"
-#build_image "ubuntu:24.04" "Dockerfile" "8.3"
+build_image "ubuntu:24.04" "Dockerfile" "8.0"
+build_image "ubuntu:24.04" "Dockerfile" "8.1"
+build_image "ubuntu:24.04" "Dockerfile" "8.2"
+build_image "ubuntu:24.04" "Dockerfile" "8.3"
 build_image "ubuntu:24.04" "Dockerfile" "8.4"
