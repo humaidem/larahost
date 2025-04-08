@@ -1,11 +1,10 @@
 #!/bin/sh
 set -e
 
+export DOLLAR="$"
+
 export PUID="${PUID:-1000}"
 export GUID="${GUID:-1000}"
-
-# Adjust permissions for run scripts
-find /etc/sv/*/run -type f -exec chmod 755 {} +
 
 # Function to update group ID if it doesn't match the provided GUID
 update_group() {
@@ -29,31 +28,30 @@ update_user() {
 update_group
 update_user
 
-# Function to handle shutdown signals
-shutdown() {
-    echo "Shutting down runit..."
-    sv stop /etc/sv/*
-    exit 0
-}
+# nginx
+/docker/nginx/entry.sh
+# pma
+/docker/pma/entry.sh
+# horizon
+/docker/horizon/entry.sh
+# mail
+/docker/mail/entry.sh
+# reverb
+/docker/reverb/entry.sh
+# php
+/docker/php/entry.sh
 
-# Trap termination signals
-trap shutdown SIGTERM SIGINT
+# crontab
+if [ "$SCHEDULE_ENABLE" = "true" ]; then
+  # Start cron
+  service cron start
+fi
 
-# Check if any arguments are passed; if not, run `runit`
-if [ "$#" -eq 0 ]; then
-    echo "Starting runit..."
-    exec runsvdir -P /etc/sv &
-    runit_pid=$!
+#chmod -R ugo+rw /.composer
 
-    # Wait for runit to start
-    while [ ! -d "/etc/sv" ]; do
-        sleep 1
-    done
-
-    update-ca-certificates --fresh
-
-    # Wait indefinitely while runit runs
-    wait $runit_pid
+if [ $# -gt 0 ]; then
+    exec "$@"
 else
-    exec su-exec docker "$@"
+    envsubst < /docker/supervisord.conf > /etc/supervisor/conf.d/supervisord.conf
+    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 fi

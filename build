@@ -28,8 +28,7 @@ build_image() {
     local OS_IMAGE="$1"
     local DOCKER_FILE="$2"
     local PHP_VERSION="$3"
-    local DOCKER_TAG="$4"
-    if ! docker build --build-arg OS_IMAGE="${OS_IMAGE}" --build-arg PHP_VERSION="${PHP_VERSION}" -f "${DOCKER_FILE}" -t "humaid/larahost:${DOCKER_TAG}" .; then
+    if ! docker build --build-arg OS_IMAGE="${OS_IMAGE}" --build-arg PHP_VERSION="${PHP_VERSION}" -f "${DOCKER_FILE}" -t "humaid/larahost:${PHP_VERSION}" .; then
         printf "Error building base Docker image\n" >&2
         return 1
     fi
@@ -37,9 +36,8 @@ build_image() {
 
 
 
-#build_image "alpine:3.20" "Dockerfile" "82" "8.2"
-#build_image "humaid/larahost:8.2" "Dockerfile-mssql" "82" "8.2-mssql"
-build_image "alpine:3.20" "Dockerfile" "83" "8.3"
-#build_image "humaid/larahost:8.3" "Dockerfile-mssql" "83" "8.3-mssql"
-#build_image "alpine:3.21" "Dockerfile" "84" "8.4"
-#build_image "humaid/larahost:8.4" "Dockerfile-mssql" "84" "8.4-mssql"
+#build_image "ubuntu:24.04" "Dockerfile" "8.0"
+#build_image "ubuntu:24.04" "Dockerfile" "8.1"
+#build_image "ubuntu:24.04" "Dockerfile" "8.2"
+#build_image "ubuntu:24.04" "Dockerfile" "8.3"
+build_image "ubuntu:24.04" "Dockerfile" "8.4"
