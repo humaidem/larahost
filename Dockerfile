@@ -99,8 +99,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 COPY --from=builder / /
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    usermod -l docker ubuntu && groupmod -n docker ubuntu && \
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && usermod -l docker ubuntu && groupmod -n docker ubuntu && \
     mv /home/ubuntu /home/docker && \
     mkdir -p /home/docker/www
 
@@ -113,12 +114,22 @@ RUN echo "* * * * * /usr/bin/php /home/docker/www/artisan schedule:run >> /home/
     && chmod 600 /var/spool/cron/crontabs/docker \
     && chown docker:crontab /var/spool/cron/crontabs/docker
 
+
+
+
 WORKDIR /home/docker/www
+
+USER docker
+ENV HOME=/home/docker \
+    PATH="/home/docker/.config/composer/vendor/bin:$PATH"
+#RUN echo 'export PATH="$HOME/.config/composer/vendor/bin:$PATH"' >> /home/docker/.bashrc
+RUN mkdir -p $HOME/.config/composer && chown -R docker:docker $HOME/.config
+RUN composer global require laravel/installer
+USER root
+
 
 ENV DOCKER_PUBLIC_ROOT=/home/docker/www/public
 
 EXPOSE 80/tcp
 
-#ENTRYPOINT ["/docker/start-container"]
-#RUN tail -f /dev/null
 CMD ["sh", "/docker/start-container.sh"]
